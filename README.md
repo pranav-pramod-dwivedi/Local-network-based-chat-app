@@ -5,57 +5,50 @@
 <h1 align="center">Local Network Chat</h1>
 
 <p align="center">
-  A chat for people on the same Wi-Fi. No cloud, no sign-up.<br/>
-  For all your "did you see my text" messages to someone three rooms away.
+  A chat that needs no server. No cloud, no sign-up, no backend to babysit.<br/>
+  Built for "did you see my text" messages to someone two rooms away.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/stack-Node%20%2B%20Express%20%2B%20Socket.io-5468FF" alt="stack" />
-  <img src="https://img.shields.io/badge/network-local%20LAN-brightgreen" alt="network" />
+  <img src="https://img.shields.io/badge/stack-HTML%20%2B%20JS%20%2B%20PeerJS-5468FF" alt="stack" />
+  <img src="https://img.shields.io/badge/host-GitHub%20Pages-24292e" alt="host" />
 </p>
 
-You type a message and it shows up on your friend's screen almost instantly, over your
-own network. Pick a name, open a browser, done writing. Built on a Sunday when getting
-up felt like a lot of walking.
+## Try it live
 
-## What it does
+https://pranav-pramod-dwivedi.github.io/Local-network-based-chat-app/
 
-- Pick a name (Naman, Pranav, whatever you feel like).
-- Every message shows up for everyone connected. No refreshes.
-- History is kept on the server in `messages.json` and sent to people who join late.
-- A little sound plays when a message lands, so nobody has to stare at the screen.
+Open it as host, share the invite link, and the other person joins as fast as their
+Wi-Fi allows. Anyone can send a message; everyone connected sees it instantly.
 
-## Run it
+## Why no server
+
+The messages go **peer to peer**, straight between browsers, using PeerJS. There's no
+server to deploy, no database, nothing in the cloud. One of you plays host and acts as
+the middle-man for the room; everyone else just connects to that invite link. This is
+why it can sit on GitHub Pages for free, same as a totally static site.
+
+## How it works
+
+1. Pick a name.
+2. **Create room** — you get a 5-letter code and an invite link with the code already in it.
+3. Send the link to your friend.
+4. Friend opens it, picks a name, and you're chatting. Latecomers get the recent history.
+
+## Run it locally (same three steps)
 
 ```bash
-npm install
-npm start     # → http://localhost:3000
+python3 -m http.server 8000   # from this folder → http://localhost:8000
 ```
 
-### Same Wi-Fi, two devices
-
-1. Start the server on one machine.
-2. Find its local IP: `ifconfig | grep inet` on macOS/Linux, `ipconfig` on Windows.
-3. Open `http://<that-IP>:3000` on the other device, e.g. `http://192.168.1.50:3000`.
-
-### Friends in another city
-
-Then it needs real hosting (Render, Railway, a VPS) and you share that URL instead.
-That's a "next weekend" problem.
-
-## Files
-
-| File | Job |
-|---|---|
-| `server.js` | the server, holds messages and broadcasts them |
-| `index.html` / `login.html` | pick a name |
-| `home.html` | one button to the chat |
-| `chat.html` / `chat.js` / `chat.css` | the actual chat |
-| `script.js` | an old client, kept around |
-| `notif.mp3` | the new-message ping |
+Everyone on the same Wi-Fi opens `http://<your-LAN-IP>:8000`. One creates a room, the
+rest join. No npm, no install, no "works on my machine".
 
 ## Notes
 
-Not encrypted. Fine for a trusted house, a terrible idea for your passwords. Don't do that.
+- Works across the internet too, not just one network, as long as both sides can reach
+  PeerJS's free public broker. If that broker is down, rooms are down until it's back.
+- Not encrypted. Fine for a friendly chat, a bad idea for passwords. Don't do that.
+- Invite links auto-point to wherever the page is hosted, so copying them just works.
 
 <p align="center">built so nobody has to shout "did you see my text" across the house</p>
