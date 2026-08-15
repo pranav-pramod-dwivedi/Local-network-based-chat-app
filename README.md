@@ -1,65 +1,66 @@
-# Local-network-based-chat-app
+<p align="center">
+  <img src="assets/cover.svg" width="830" alt="Local Network Chat cover" />
+</p>
 
-A simple real-time chat that runs on your **local network** — no cloud, no sign-up,
-no database. Two (or more) devices on the same Wi-Fi can talk to each other over
-**Socket.IO** + **Express**.
+<h1 align="center">Local Network Chat 💬</h1>
 
-## What it does
+<p align="center">
+  <b>talk to your people on the same Wi-Fi</b> — instantly.
+  <br/>No cloud. No sign-up. Just you, me &amp; our router.
+</p>
 
-- Pick a name (**Naman** or **Pranav**) on the login screen.
-- Chat in real time — messages broadcast to everyone connected to the server.
-- Chat history is kept on the server (in `messages.json`) and sent to new joiners.
-- Play notification sound when a new message arrives.
+<p align="center">
+  <img src="https://img.shields.io/badge/stack-Node%20%2B%20Express%20%2B%20Socket.io-5468FF" alt="stack" />
+  <img src="https://img.shields.io/badge/network-local%20LAN-brightgreen" alt="network" />
+  <img src="https://img.shields.io/badge/history-messages.json-3A4DB2" alt="history" />
+</p>
 
-## How to run
+---
 
-Requires [Node.js](https://nodejs.org) installed.
+Type a message → bam, it's on your friend's screen. Real-time, peer-to-peer on your own
+network. Pick a name, open a browser, and it feels like the old days of chatting till 3am. 🌙
+
+## ✨ What it does
+
+- 🪪 Pick your name (**Naman** or **Pranav**) — or anyone, really.
+- ⚡ Every message broadcasts to everyone connected, as it happens.
+- 💾 Chat history lives on the server (`messages.json`) and reaches new joiners.
+- 🔊 A little **ping!** when a new message lands.
+
+## ▶️ Quick start
 
 ```bash
 npm install
-npm start
+npm start        # server on port 3000 → http://localhost:3000
 ```
 
-The server prints its port (default **3000**).
+### Chat between two devices (same Wi-Fi) 🏠
+1. Run the server on one machine.
+2. Grab its **local IP**:
+   - macOS/Linux → `ifconfig | grep inet` · Windows → `ipconfig`
+3. Open `http://<that-IP>:3000` on the other device.
+   - e.g. `http://192.168.1.50:3000`
 
-### Chat between two devices on the same Wi-Fi
+Two names, one room, zero drama. 😄
 
-1. Start the server on one machine.
-2. Find that machine's local IP:
-   - **macOS/Linux:** `ifconfig | grep inet` or `ip addr`
-   - **Windows:** `ipconfig`
-   - (look for something like `192.168.x.x`)
-3. On the second device (phone or laptop), open a browser and go to:
+### Different networks? 🌍
+For friends across the internet, host the server somewhere (Render / Railway / a VPS)
+and share that URL instead.
 
-   ```
-   http://<that-IP>:3000
-   ```
+## 🗂️ The files
 
-   e.g. `http://192.168.1.50:3000`
-
-4. Both devices log in with different names and chat.
-
-> Your own machine can also just use `http://localhost:3000`.
-
-### Different networks?
-
-Socket.IO needs the phones/PCs to reach the server. For chat across the internet the
-server must be deployed (e.g. to Render / Railway / a VPS) — then everyone opens that
-deployed URL.
-
-## Files
-
-| File | Purpose |
+| File | Job |
 |---|---|
-| `server.js` | Express + Socket.IO server; serves the app and keeps chat history |
-| `index.html` / `login.html` | Login screen (pick a name) |
-| `home.html` | Home button that routes to the chat |
-| `chat.html` / `chat.css` | Chat UI |
-| `chat.js` | Socket.IO client — sends/receives messages, renders them, plays sound |
-| `script.js` | Legacy socket client kept for reference (not used by `chat.html`) |
-| `notif.mp3` / `style.css` | Notification sound and shared styles |
+| `server.js` | Express + Socket.IO server, holds chat history |
+| `index.html` / `login.html` | pick a name |
+| `home.html` | the cosy route to the chat |
+| `chat.html` / `chat.js` / `chat.css` | the chat itself |
+| `script.js` | older client kept around for reference |
+| `notif.mp3` | the little ping 🔊 |
 
-## Notes
+> Head's up: it's a friendly tool, not end-to-end encrypted — perfect for a trusted home
+> network, don't put your bank passwords in there. 🙈
 
-- Chat history persists to `messages.json` in the repo folder between server restarts.
-- Messages are **not encrypted** — fine for a trusted home network, not for public use.
+---
+
+<p align="center">made for the people you'd text at 1am · rewā, india</p>
