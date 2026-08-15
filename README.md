@@ -2,65 +2,60 @@
   <img src="assets/cover.svg" width="830" alt="Local Network Chat cover" />
 </p>
 
-<h1 align="center">Local Network Chat 💬</h1>
+<h1 align="center">Local Network Chat</h1>
 
 <p align="center">
-  <b>talk to your people on the same Wi-Fi</b> — instantly.
-  <br/>No cloud. No sign-up. Just you, me &amp; our router.
+  A chat for people on the same Wi-Fi. No cloud, no sign-up.<br/>
+  For all your "did you see my text" messages to someone three rooms away.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/stack-Node%20%2B%20Express%20%2B%20Socket.io-5468FF" alt="stack" />
   <img src="https://img.shields.io/badge/network-local%20LAN-brightgreen" alt="network" />
-  <img src="https://img.shields.io/badge/history-messages.json-3A4DB2" alt="history" />
 </p>
 
----
+You type a message and it shows up on your friend's screen almost instantly, over your
+own network. Pick a name, open a browser, done writing. Built on a Sunday when getting
+up felt like a lot of walking.
 
-Type a message → bam, it's on your friend's screen. Real-time, peer-to-peer on your own
-network. Pick a name, open a browser, and it feels like the old days of chatting till 3am. 🌙
+## What it does
 
-## ✨ What it does
+- Pick a name (Naman, Pranav, whatever you feel like).
+- Every message shows up for everyone connected. No refreshes.
+- History is kept on the server in `messages.json` and sent to people who join late.
+- A little sound plays when a message lands, so nobody has to stare at the screen.
 
-- 🪪 Pick your name (**Naman** or **Pranav**) — or anyone, really.
-- ⚡ Every message broadcasts to everyone connected, as it happens.
-- 💾 Chat history lives on the server (`messages.json`) and reaches new joiners.
-- 🔊 A little **ping!** when a new message lands.
-
-## ▶️ Quick start
+## Run it
 
 ```bash
 npm install
-npm start        # server on port 3000 → http://localhost:3000
+npm start     # → http://localhost:3000
 ```
 
-### Chat between two devices (same Wi-Fi) 🏠
-1. Run the server on one machine.
-2. Grab its **local IP**:
-   - macOS/Linux → `ifconfig | grep inet` · Windows → `ipconfig`
-3. Open `http://<that-IP>:3000` on the other device.
-   - e.g. `http://192.168.1.50:3000`
+### Same Wi-Fi, two devices
 
-Two names, one room, zero drama. 😄
+1. Start the server on one machine.
+2. Find its local IP: `ifconfig | grep inet` on macOS/Linux, `ipconfig` on Windows.
+3. Open `http://<that-IP>:3000` on the other device, e.g. `http://192.168.1.50:3000`.
 
-### Different networks? 🌍
-For friends across the internet, host the server somewhere (Render / Railway / a VPS)
-and share that URL instead.
+### Friends in another city
 
-## 🗂️ The files
+Then it needs real hosting (Render, Railway, a VPS) and you share that URL instead.
+That's a "next weekend" problem.
+
+## Files
 
 | File | Job |
 |---|---|
-| `server.js` | Express + Socket.IO server, holds chat history |
+| `server.js` | the server, holds messages and broadcasts them |
 | `index.html` / `login.html` | pick a name |
-| `home.html` | the cosy route to the chat |
-| `chat.html` / `chat.js` / `chat.css` | the chat itself |
-| `script.js` | older client kept around for reference |
-| `notif.mp3` | the little ping 🔊 |
+| `home.html` | one button to the chat |
+| `chat.html` / `chat.js` / `chat.css` | the actual chat |
+| `script.js` | an old client, kept around |
+| `notif.mp3` | the new-message ping |
 
-> Head's up: it's a friendly tool, not end-to-end encrypted — perfect for a trusted home
-> network, don't put your bank passwords in there. 🙈
+## Notes
 
----
+Not encrypted. Fine for a trusted house, a terrible idea for your passwords. Don't do that.
 
-<p align="center">made for the people you'd text at 1am · rewā, india</p>
+<p align="center">built so nobody has to shout "did you see my text" across the house</p>
