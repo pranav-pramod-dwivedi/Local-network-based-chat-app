@@ -163,13 +163,34 @@
 
   function copyInvite(btn) {
     var url = getInviteUrl();
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(function () {
-        var prev = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(function () { btn.textContent = prev; }, 2000);
-      });
+    var prev = btn.textContent;
+    function feedback() {
+      btn.textContent = 'Copied!';
+      setTimeout(function () { btn.textContent = prev; }, 2000);
     }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(feedback).catch(function () {
+        fallbackCopy(url, feedback);
+      });
+    } else {
+      fallbackCopy(url, feedback);
+    }
+  }
+
+  function fallbackCopy(text, callback) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.top = '-9999px';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      callback && callback();
+    } catch (e) {}
   }
 
   $('copyRoomBtn').onclick = function () { copyInvite(this); };
@@ -221,6 +242,7 @@
     c.on('close', function () {
       conns = conns.filter(function (x) { return x !== c; });
       if (isHost) add({ sys: true }, 'someone left');
+      if (!isHost && conns.length === 0) status('disconnected', false);
     });
     c.on('error', function () {});
   }
@@ -228,12 +250,12 @@
   var CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   function randCode() { var s=''; for (var i=0;i<5;i++) s+=CODE[Math.floor(Math.random()*CODE.length)]; return s; }
   function join(code) {
-    code = (code || '').trim().toUpperCase();
+    code = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!code) return;
     roomCode = code; isHost = false;
     peer = new Peer();
     peer.on('open', function () { status('joining ' + roomCode); var c = peer.connect(code, {reliable:true}); wireConn(c); showChat(); });
-    peer.on('error', function () { status('room not found'); });
+    peer.on('error', function () { status('room not found', false); });
   }
 
   $('createRoom').onclick = function () {
@@ -259,6 +281,7 @@
     add(msg);
     broadcast({ t: 'chat', msg: msg });
     input.value = '';
+    input.focus();
   }
   $('send').onclick = send;
   input.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
