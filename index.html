@@ -139,9 +139,10 @@
   function now() { return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
 
   function add(m, text) {
+    if (m.sys && !m.text && text) m.text = text;
     messages.push(m);
     if (m.sys) {
-      var s = document.createElement('div'); s.className = 'sys'; s.textContent = text;
+      var s = document.createElement('div'); s.className = 'sys'; s.textContent = text || m.text || '';
       log.appendChild(s);
     } else {
       var div = document.createElement('div');
@@ -166,7 +167,11 @@
     var prev = btn.textContent;
     function feedback() {
       btn.textContent = 'Copied!';
-      setTimeout(function () { btn.textContent = prev; }, 2000);
+      btn.style.borderColor = 'var(--acc)';
+      setTimeout(function () {
+        btn.textContent = prev;
+        btn.style.borderColor = '';
+      }, 2000);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(feedback).catch(function () {
@@ -213,7 +218,7 @@
       status('room ' + roomCode, true);
       if (isHost) {
         if (messages.length) c.send({ t: 'init', history: messages });
-        add({ sys: true }, 'someone joined');
+        add({ sys: true, text: 'someone joined' }, 'someone joined');
       }
     });
     c.on('data', function (d) {
@@ -241,7 +246,7 @@
     });
     c.on('close', function () {
       conns = conns.filter(function (x) { return x !== c; });
-      if (isHost) add({ sys: true }, 'someone left');
+      if (isHost) add({ sys: true, text: 'someone left' }, 'someone left');
       if (!isHost && conns.length === 0) status('disconnected', false);
     });
     c.on('error', function () {});
