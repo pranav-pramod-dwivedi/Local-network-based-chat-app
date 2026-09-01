@@ -129,6 +129,15 @@
   customNameInput.oninput = function () {
     try { localStorage.setItem('lnc_username', customNameInput.value.trim()); } catch (e) {}
   };
+  customNameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      if ($('roomCode').value.trim()) {
+        $('joinRoom').click();
+      } else {
+        $('createRoom').click();
+      }
+    }
+  });
 
   function setLive(live) { $('state').className = 'state' + (live ? ' live' : ''); }
   function status(t, live) { $('status').textContent = t; if (live !== undefined) setLive(live); }
@@ -258,9 +267,13 @@
     code = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!code) return;
     roomCode = code; isHost = false;
+    $('roomCode').value = code;
     peer = new Peer();
     peer.on('open', function () { status('joining ' + roomCode); var c = peer.connect(code, {reliable:true}); wireConn(c); showChat(); });
-    peer.on('error', function () { status('room not found', false); });
+    peer.on('error', function () {
+      status('room not found', false);
+      add({ sys: true, text: 'Could not connect to room ' + roomCode + '. Make sure the host is online and the code is correct.' }, 'Could not connect to room ' + roomCode);
+    });
   }
 
   $('createRoom').onclick = function () {
