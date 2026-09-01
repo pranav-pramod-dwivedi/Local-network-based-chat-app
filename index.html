@@ -131,6 +131,7 @@
   }
   function showChat() {
     $('landing').classList.add('hidden');
+    $('chatlog').classList.remove('hidden');
     $('compose').classList.remove('hidden');
     input.focus();
   }
@@ -140,12 +141,33 @@
     c.on('open', function () {
       conns.push(c);
       status('room ' + roomCode, true);
-      if (isHost) { if (messages.length) c.send({ t: 'init', history: messages }); add({ sys: true }, 'someone joined'); }
+      if (isHost) {
+        if (messages.length) c.send({ t: 'init', history: messages });
+        add({ sys: true }, 'someone joined');
+      }
     });
     c.on('data', function (d) {
-      d = (typeof d === 'string') ? JSON.parse(d) : d;
-      if (d.t === 'init') messages = d.history || [];
-      else if (d.t === 'chat') add(d.msg);
+      try {
+        d = (typeof d === 'string') ? JSON.parse(d) : d;
+      } catch (e) {
+        return;
+      }
+      if (!d || !d.t) return;
+      if (d.t === 'init') {
+        log.innerHTML = '';
+        messages = [];
+        if (Array.isArray(d.history)) {
+          d.history.forEach(function (histMsg) {
+            if (histMsg.sys) {
+              add(histMsg, histMsg.text || 'system message');
+            } else {
+              add(histMsg);
+            }
+          });
+        }
+      } else if (d.t === 'chat') {
+        add(d.msg);
+      }
     });
     c.on('close', function () {
       conns = conns.filter(function (x) { return x !== c; });
@@ -177,8 +199,20 @@
     peer.on('connection', wireConn);
     peer.on('error', function (err) { if (err.type === 'unavailable-id') { roomCode = randCode(); peer.destroy(); $('createRoom').onclick(); } });
   };
-  $('inviteCode').onclick = function () { navigator.clipboard && navigator.clipboard.writeText(this.textContent); };
+  $('inviteCode').onclick = function () {
+    var codeEl = this;
+    var origText = codeEl.textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(origText).then(function () {
+        codeEl.textContent = 'Copied to clipboard!';
+        setTimeout(function () { codeEl.textContent = origText; }, 2000);
+      });
+    }
+  };
   $('joinRoom').onclick = function () { join($('roomCode').value); };
+  $('roomCode').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') join($('roomCode').value);
+  });
 
   function send() {
     var text = input.value.trim();
