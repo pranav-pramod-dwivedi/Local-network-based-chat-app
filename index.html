@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#201E18" />
 <title>Local Network Chat</title>
 <style>
   :root {
@@ -11,11 +12,14 @@
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); height:100vh; display:flex; flex-direction:column; }
-  .bar { background:#201E18; color:var(--card); padding:13px 20px; display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .bar { background:#201E18; color:var(--card); padding:13px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
   .bar .brand { font-weight:700; letter-spacing:.14em; text-transform:uppercase; font-size:14px; }
+  .bar-actions { display:flex; align-items:center; gap:10px; }
   .bar .state { font-size:12px; color:#C8C3B2; display:flex; align-items:center; gap:7px; }
   .bar .state i { width:8px; height:8px; border-radius:50%; background:#5A564A; display:inline-block; }
   .bar .state.live i { background:var(--acc); }
+  .chip-btn { background:rgba(255,255,255,0.12); color:var(--card); font-size:11px; padding:4px 9px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); cursor:pointer; font-weight:500; transition:all .2s; }
+  .chip-btn:hover { background:rgba(255,255,255,0.22); border-color:var(--acc); }
   main { width:100%; max-width:640px; margin:0 auto; padding:28px 20px 24px; display:flex; flex-direction:column; gap:18px; overflow:hidden; flex:1; }
   .landing .eyebrow { font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--mut); margin-bottom:10px; }
   .landing h1 { font-size:26px; line-height:1.2; font-weight:700; margin-bottom:6px; }
@@ -32,9 +36,8 @@
   .primary:hover { filter:brightness(.96); }
   .ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
   .ghost:hover { border-color:var(--ink); }
-  .invite { margin-top:16px; border-top:1px dashed var(--line); padding-top:14px; }
-  .invite code { display:block; font-family:ui-monospace,Menlo,monospace; font-size:12px; background:var(--card); border:1px dashed var(--line); border-radius:6px; padding:10px 12px; color:var(--acc); word-break:break-all; cursor:pointer; margin-top:8px; }
-  .invite code:hover { border-color:var(--acc); }
+  .room-banner { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; }
+  .room-banner .code-tag { font-family:ui-monospace,Menlo,monospace; font-weight:bold; color:var(--acc); background:rgba(217,90,43,0.08); padding:3px 6px; border-radius:4px; }
   .hidden { display:none !important; }
   /* chat */
   .chat { flex:1; overflow-y:auto; padding:4px 2px; display:flex; flex-direction:column; gap:12px; }
@@ -57,7 +60,10 @@
 <body>
   <div class="bar">
     <span class="brand">local network chat</span>
-    <span class="state" id="state"><i></i><span id="status">offline</span></span>
+    <div class="bar-actions">
+      <button class="chip-btn hidden" id="copyRoomBtn" title="Copy room link">Copy Link</button>
+      <span class="state" id="state"><i></i><span id="status">offline</span></span>
+    </div>
   </div>
 
   <main>
@@ -66,12 +72,14 @@
       <h1>Talk to your people,<br/>no server in the way.</h1>
       <p class="lede">Messages travel straight between browsers. One of you makes a room, the rest join by link.</p>
 
-      <label>You are</label>
+      <label for="customName">Your display name</label>
       <div class="field">
-        <select id="who">
-          <option>Pranav</option>
-          <option>Naman</option>
-          <option>passer-by</option>
+        <input type="text" id="customName" placeholder="Enter your name" maxlength="24" />
+        <select id="who" aria-label="Preset name select">
+          <option value="">Presets...</option>
+          <option value="Pranav">Pranav</option>
+          <option value="Naman">Naman</option>
+          <option value="passer-by">passer-by</option>
         </select>
       </div>
 
@@ -80,20 +88,20 @@
       </div>
 
       <div class="field" style="margin-top:14px">
-        <input type="text" id="roomCode" placeholder="…or paste a room code to join" />
+        <input type="text" id="roomCode" placeholder="…or paste a room code to join" aria-label="Room code" />
         <button class="ghost" id="joinRoom">Join</button>
       </div>
-
-      <div class="invite hidden" id="inviteLine">
-        <span>Invite anyone with this link (click to copy):</span>
-        <code id="inviteCode"></code>
-      </div>
     </section>
+
+    <div class="room-banner hidden" id="roomBanner">
+      <span>Room: <span class="code-tag" id="activeRoomCode"></span></span>
+      <button class="ghost" id="shareRoomBtn" style="padding:4px 10px; font-size:12px;">Copy invite link</button>
+    </div>
 
     <section class="chat hidden" id="chatlog"></section>
 
     <section class="compose hidden" id="compose">
-      <input type="text" id="msg" placeholder="Type a message…" autocomplete="off" />
+      <input type="text" id="msg" placeholder="Type a message…" autocomplete="off" aria-label="Chat message" />
       <button class="primary" id="send">Send</button>
     </section>
   </main>
@@ -103,12 +111,31 @@
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var log = $('chatlog'), input = $('msg');
+  var log = $('chatlog'), input = $('msg'), customNameInput = $('customName'), whoSelect = $('who');
   var messages = [], conns = [], peer = null, isHost = false, roomCode = null;
+
+  try {
+    var savedName = localStorage.getItem('lnc_username');
+    if (savedName) customNameInput.value = savedName;
+  } catch (e) {}
+
+  whoSelect.onchange = function () {
+    if (whoSelect.value) {
+      customNameInput.value = whoSelect.value;
+      try { localStorage.setItem('lnc_username', whoSelect.value); } catch (e) {}
+    }
+  };
+
+  customNameInput.oninput = function () {
+    try { localStorage.setItem('lnc_username', customNameInput.value.trim()); } catch (e) {}
+  };
 
   function setLive(live) { $('state').className = 'state' + (live ? ' live' : ''); }
   function status(t, live) { $('status').textContent = t; if (live !== undefined) setLive(live); }
-  function who() { return $('who').value; }
+  function who() {
+    var n = customNameInput.value.trim();
+    return n || whoSelect.value || 'passer-by';
+  }
   function now() { return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
 
   function add(m, text) {
@@ -129,8 +156,30 @@
     }
     log.scrollTop = log.scrollHeight;
   }
+
+  function getInviteUrl() {
+    return location.href.split('?')[0] + '?r=' + roomCode;
+  }
+
+  function copyInvite(btn) {
+    var url = getInviteUrl();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        var prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = prev; }, 2000);
+      });
+    }
+  }
+
+  $('copyRoomBtn').onclick = function () { copyInvite(this); };
+  $('shareRoomBtn').onclick = function () { copyInvite(this); };
+
   function showChat() {
     $('landing').classList.add('hidden');
+    $('roomBanner').classList.remove('hidden');
+    $('activeRoomCode').textContent = roomCode;
+    $('copyRoomBtn').classList.remove('hidden');
     $('chatlog').classList.remove('hidden');
     $('compose').classList.remove('hidden');
     input.focus();
@@ -192,23 +241,12 @@
     peer = new Peer(roomCode);
     peer.on('open', function (id) {
       status('hosting ' + id, true);
-      $('inviteLine').classList.remove('hidden');
-      $('inviteCode').textContent = location.href.split('?')[0] + '?r=' + id;
       showChat();
     });
     peer.on('connection', wireConn);
     peer.on('error', function (err) { if (err.type === 'unavailable-id') { roomCode = randCode(); peer.destroy(); $('createRoom').onclick(); } });
   };
-  $('inviteCode').onclick = function () {
-    var codeEl = this;
-    var origText = codeEl.textContent;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(origText).then(function () {
-        codeEl.textContent = 'Copied to clipboard!';
-        setTimeout(function () { codeEl.textContent = origText; }, 2000);
-      });
-    }
-  };
+
   $('joinRoom').onclick = function () { join($('roomCode').value); };
   $('roomCode').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') join($('roomCode').value);
