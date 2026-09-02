@@ -95,7 +95,10 @@
 
     <div class="room-banner hidden" id="roomBanner">
       <span>Room: <span class="code-tag" id="activeRoomCode"></span></span>
-      <button class="ghost" id="shareRoomBtn" style="padding:4px 10px; font-size:12px;">Copy invite link</button>
+      <div style="display:flex; gap:8px;">
+        <button class="ghost" id="shareRoomBtn" style="padding:4px 10px; font-size:12px;">Copy invite link</button>
+        <button class="ghost" id="leaveRoomBtn" style="padding:4px 10px; font-size:12px; color:var(--mut);" title="Leave room">Leave</button>
+      </div>
     </div>
 
     <section class="chat hidden" id="chatlog"></section>
@@ -150,6 +153,7 @@
   function add(m, text) {
     if (m.sys && !m.text && text) m.text = text;
     messages.push(m);
+    var isNearBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 80;
     if (m.sys) {
       var s = document.createElement('div'); s.className = 'sys'; s.textContent = text || m.text || '';
       log.appendChild(s);
@@ -164,7 +168,9 @@
       div.appendChild(whoEl); div.appendChild(body); div.appendChild(time);
       log.appendChild(div);
     }
-    log.scrollTop = log.scrollHeight;
+    if (isNearBottom || m.from === who()) {
+      log.scrollTop = log.scrollHeight;
+    }
   }
 
   function getInviteUrl() {
@@ -209,6 +215,26 @@
 
   $('copyRoomBtn').onclick = function () { copyInvite(this); };
   $('shareRoomBtn').onclick = function () { copyInvite(this); };
+
+  function leaveRoom() {
+    conns.forEach(function (c) { try { c.close(); } catch (e) {} });
+    conns = [];
+    if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
+    roomCode = null;
+    isHost = false;
+    messages = [];
+    log.innerHTML = '';
+    $('landing').classList.remove('hidden');
+    $('roomBanner').classList.add('hidden');
+    $('copyRoomBtn').classList.add('hidden');
+    $('chatlog').classList.add('hidden');
+    $('compose').classList.add('hidden');
+    status('offline', false);
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, document.title, location.pathname);
+    }
+  }
+  if ($('leaveRoomBtn')) $('leaveRoomBtn').onclick = leaveRoom;
 
   function showChat() {
     $('landing').classList.add('hidden');
@@ -266,11 +292,12 @@
   function join(code) {
     code = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!code) return;
+    if (peer) { try { peer.destroy(); } catch (e) {} }
     roomCode = code; isHost = false;
     $('roomCode').value = code;
     peer = new Peer();
     peer.on('open', function () { status('joining ' + roomCode); var c = peer.connect(code, {reliable:true}); wireConn(c); showChat(); });
-    peer.on('error', function () {
+    peer.on('error', function (err) {
       status('room not found', false);
       add({ sys: true, text: 'Could not connect to room ' + roomCode + '. Make sure the host is online and the code is correct.' }, 'Could not connect to room ' + roomCode);
     });
