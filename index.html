@@ -104,7 +104,7 @@
     <section class="chat hidden" id="chatlog" role="log" aria-live="polite"></section>
 
     <section class="compose hidden" id="compose">
-      <input type="text" id="msg" placeholder="Type a message…" autocomplete="off" aria-label="Chat message" />
+      <input type="text" id="msg" placeholder="Type a message…" autocomplete="off" aria-label="Chat message" maxlength="1000" />
       <button class="primary" id="send">Send</button>
     </section>
   </main>
@@ -134,8 +134,8 @@
   };
   customNameInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
-      if ($('roomCode').value.trim()) {
-        $('joinRoom').click();
+      if ($('customName').value.trim()) {
+        $('createRoom').click();
       } else {
         $('createRoom').click();
       }
