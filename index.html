@@ -61,7 +61,7 @@
   <div class="bar">
     <span class="brand">local network chat</span>
     <div class="bar-actions">
-      <button class="chip-btn hidden" id="copyRoomBtn" title="Copy room link">Copy Link</button>
+      <button class="chip-btn hidden" id="copyRoomBtn" title="Copy room link" aria-label="Copy room link">Copy Link</button>
       <span class="state" id="state"><i></i><span id="status">offline</span></span>
     </div>
   </div>
@@ -96,8 +96,8 @@
     <div class="room-banner hidden" id="roomBanner">
       <span>Room: <span class="code-tag" id="activeRoomCode"></span></span>
       <div style="display:flex; gap:8px;">
-        <button class="ghost" id="shareRoomBtn" style="padding:4px 10px; font-size:12px;">Copy invite link</button>
-        <button class="ghost" id="leaveRoomBtn" style="padding:4px 10px; font-size:12px; color:var(--mut);" title="Leave room">Leave</button>
+        <button class="ghost" id="shareRoomBtn" style="padding:4px 10px; font-size:12px;" aria-label="Copy room invite link">Copy invite link</button>
+        <button class="ghost" id="leaveRoomBtn" style="padding:4px 10px; font-size:12px; color:var(--mut);" title="Leave room" aria-label="Leave room">Leave</button>
       </div>
     </div>
 
@@ -322,6 +322,7 @@
   function send() {
     var text = input.value.trim();
     if (!text) return;
+    if (!roomCode) return;
     var msg = { from: who(), text: text, time: now() };
     add(msg);
     broadcast({ t: 'chat', msg: msg });
@@ -332,7 +333,8 @@
   input.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
 
   var q = new URLSearchParams(location.search);
-  if (q.get('r')) join(q.get('r'));
+  var autoRoom = (q.get('r') || q.get('room') || '').trim().toUpperCase();
+  if (autoRoom) join(autoRoom);
 })();
 </script>
 </body>
