@@ -296,8 +296,18 @@
   var CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   function randCode() { var s=''; for (var i=0;i<5;i++) s+=CODE[Math.floor(Math.random()*CODE.length)]; return s; }
   function join(code) {
-    code = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    code = (code || '').trim();
     if (!code) return;
+    if (code.indexOf('?r=') !== -1) code = code.split('?r=')[1].split('&')[0];
+    else if (code.indexOf('?room=') !== -1) code = code.split('?room=')[1].split('&')[0];
+    else if (code.indexOf('?R=') !== -1) code = code.split('?R=')[1].split('&')[0];
+    else if (code.indexOf('?ROOM=') !== -1) code = code.split('?ROOM=')[1].split('&')[0];
+    code = code.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    if (!code) return;
+    if (typeof Peer === 'undefined') {
+      status('chat library not loaded — check connection', false);
+      return;
+    }
     if (peer) { try { peer.destroy(); } catch (e) {} }
     roomCode = code; isHost = false;
     $('roomCode').value = code;
@@ -310,6 +320,10 @@
   }
 
   $('createRoom').onclick = function () {
+    if (typeof Peer === 'undefined') {
+      status('chat library not loaded — check connection', false);
+      return;
+    }
     roomCode = randCode(); isHost = true;
     peer = new Peer(roomCode);
     peer.on('open', function (id) {
@@ -329,6 +343,7 @@
     var text = input.value.trim();
     if (!text) return;
     if (!roomCode) return;
+    if (text.length > 1000) text = text.slice(0, 1000);
     var msg = { from: who(), text: text, time: now(), sender: peer ? peer.id : null };
     add(msg);
     broadcast({ t: 'chat', msg: msg });
