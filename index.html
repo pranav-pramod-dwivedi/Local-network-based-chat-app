@@ -20,6 +20,7 @@
   .bar .state.live i { background:var(--acc); }
   .chip-btn { background:rgba(255,255,255,0.12); color:var(--card); font-size:11px; padding:4px 9px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); cursor:pointer; font-weight:500; transition:all .2s; }
   .chip-btn:hover { background:rgba(255,255,255,0.22); border-color:var(--acc); }
+  .peers { font-size:12px; color:#C8C3B2; display:flex; align-items:center; gap:5px; }
   main { width:100%; max-width:640px; margin:0 auto; padding:28px 20px 24px; display:flex; flex-direction:column; gap:18px; overflow:hidden; flex:1; }
   .landing .eyebrow { font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--mut); margin-bottom:10px; }
   .landing h1 { font-size:26px; line-height:1.2; font-weight:700; margin-bottom:6px; }
@@ -65,6 +66,7 @@
     <span class="brand">local network chat</span>
     <div class="bar-actions">
       <button class="chip-btn hidden" id="copyRoomBtn" title="Copy room link" aria-label="Copy room link">Copy Link</button>
+      <span class="peers hidden" id="peers" aria-label="Participants in room"></span>
       <span class="state" id="state"><i></i><span id="status">offline</span></span>
     </div>
   </div>
@@ -146,6 +148,13 @@
     return n || whoSelect.value || 'passer-by';
   }
   function now() { return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+  function updatePeerCount() {
+    var el = $('peers');
+    if (!roomCode) { el.classList.add('hidden'); el.textContent = ''; return; }
+    var count = conns.length + 1; /* include self */
+    el.textContent = count + (count === 1 ? ' person' : ' people');
+    el.classList.remove('hidden');
+  }
 
   function add(m, text) {
     if (m.sys && !m.text && text) m.text = text;
@@ -225,6 +234,8 @@
     $('landing').classList.remove('hidden');
     $('roomBanner').classList.add('hidden');
     $('copyRoomBtn').classList.add('hidden');
+    $('peers').classList.add('hidden');
+    $('peers').textContent = '';
     $('chatlog').classList.add('hidden');
     $('compose').classList.add('hidden');
     status('offline', false);
@@ -241,6 +252,7 @@
     $('copyRoomBtn').classList.remove('hidden');
     $('chatlog').classList.remove('hidden');
     $('compose').classList.remove('hidden');
+    updatePeerCount();
     input.focus();
   }
   function broadcast(msg) { conns.forEach(function (c) { if (c.open) c.send(msg); }); }
@@ -249,6 +261,7 @@
     c.on('open', function () {
       conns.push(c);
       status('room ' + roomCode, true);
+      updatePeerCount();
       if (isHost) {
         if (messages.length) c.send({ t: 'init', history: messages });
         add({ sys: true, text: 'someone joined' }, 'someone joined');
@@ -284,6 +297,7 @@
     });
     c.on('close', function () {
       conns = conns.filter(function (x) { return x !== c; });
+      updatePeerCount();
       if (isHost) add({ sys: true, text: 'someone left' }, 'someone left');
       if (!isHost && conns.length === 0) status('disconnected', false);
     });
