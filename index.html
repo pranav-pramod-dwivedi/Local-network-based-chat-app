@@ -55,6 +55,9 @@
   .compose { display:flex; gap:10px; margin-top:14px; }
   .compose input { flex:1; }
   .compose button { flex:0 0 auto; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -133,13 +136,7 @@
     try { localStorage.setItem('lnc_username', customNameInput.value.trim()); } catch (e) {}
   };
   customNameInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      if ($('customName').value.trim()) {
-        $('createRoom').click();
-      } else {
-        $('createRoom').click();
-      }
-    }
+    if (e.key === 'Enter') $('createRoom').click();
   });
 
   function setLive(live) { $('state').className = 'state' + (live ? ' live' : ''); }
