@@ -351,9 +351,10 @@
       conns.push(c);
       status('room ' + roomCode, true);
       updatePeerCount();
-      if (isHost) {
+      if (!isHost) {
+        c.send({ t: 'intro', name: who() });
+      } else {
         if (messages.length) c.send({ t: 'init', history: messages });
-        add({ sys: true, text: 'someone joined' }, 'someone joined');
       }
     });
     c.on('data', function (d) {
@@ -363,7 +364,19 @@
         return;
       }
       if (!d || !d.t) return;
-      if (d.t === 'init') {
+      if (d.t === 'intro') {
+        var joinerName = (typeof d.name === 'string' && d.name.trim()) ? d.name.trim().slice(0, 24) : 'someone';
+        c._peerName = joinerName;
+        var joinText = joinerName + ' joined';
+        add({ sys: true, text: joinText }, joinText);
+        if (isHost) {
+          conns.forEach(function (conn) {
+            if (conn !== c && conn.open) conn.send({ t: 'sys', text: joinText });
+          });
+        }
+      } else if (d.t === 'sys') {
+        add({ sys: true, text: d.text }, d.text);
+      } else if (d.t === 'init') {
         log.innerHTML = '';
         messages = [];
         if (Array.isArray(d.history)) {
@@ -385,9 +398,14 @@
       }
     });
     c.on('close', function () {
+      var leftName = c._peerName || 'someone';
       conns = conns.filter(function (x) { return x !== c; });
       updatePeerCount();
-      if (isHost) add({ sys: true, text: 'someone left' }, 'someone left');
+      if (isHost) {
+        var leaveText = leftName + ' left';
+        add({ sys: true, text: leaveText }, leaveText);
+        broadcast({ t: 'sys', text: leaveText });
+      }
       if (!isHost && conns.length === 0) status('disconnected', false);
     });
     c.on('error', function () {});
