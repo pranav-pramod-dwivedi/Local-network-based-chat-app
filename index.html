@@ -441,14 +441,17 @@
 
   var CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   function randCode() { var s=''; for (var i=0;i<5;i++) s+=CODE[Math.floor(Math.random()*CODE.length)]; return s; }
-  function join(code) {
+  function parseRoomCode(code) {
     code = (code || '').trim();
-    if (!code) return;
+    if (!code) return '';
     if (code.indexOf('?r=') !== -1) code = code.split('?r=')[1].split('&')[0];
     else if (code.indexOf('?room=') !== -1) code = code.split('?room=')[1].split('&')[0];
     else if (code.indexOf('?R=') !== -1) code = code.split('?R=')[1].split('&')[0];
     else if (code.indexOf('?ROOM=') !== -1) code = code.split('?ROOM=')[1].split('&')[0];
-    code = code.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return code.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  }
+  function join(code) {
+    code = parseRoomCode(code);
     if (!code) return;
     if (typeof Peer === 'undefined') {
       status('chat library not loaded — check connection', false);
