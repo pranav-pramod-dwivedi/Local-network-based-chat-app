@@ -68,6 +68,7 @@
   <div class="bar">
     <span class="brand">local network chat</span>
     <div class="bar-actions">
+      <button class="chip-btn" id="soundBtn" title="Toggle notification sound" aria-label="Toggle notification sound">🔔 Sound</button>
       <button class="chip-btn hidden" id="copyRoomBtn" title="Copy room link" aria-label="Copy room link">Copy Link</button>
       <span class="peers hidden" id="peers" aria-label="Participants in room"></span>
       <span class="state" id="state"><i></i><span id="status">offline</span></span>
@@ -151,6 +152,68 @@
     return n || whoSelect.value || 'passer-by';
   }
   function now() { return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+
+  var originalTitle = document.title;
+  var unreadCount = 0;
+  var soundEnabled = false;
+  try {
+    var storedSound = localStorage.getItem('lnc_sound');
+    soundEnabled = storedSound === '1';
+  } catch (e) {}
+
+  function updateSoundBtn() {
+    var btn = $('soundBtn');
+    if (btn) btn.textContent = soundEnabled ? '🔔 Sound' : '🔕 Muted';
+  }
+  updateSoundBtn();
+
+  if ($('soundBtn')) {
+    $('soundBtn').onclick = function () {
+      soundEnabled = !soundEnabled;
+      try { localStorage.setItem('lnc_sound', soundEnabled ? '1' : '0'); } catch (e) {}
+      updateSoundBtn();
+    };
+  }
+
+  function playChime() {
+    if (!soundEnabled) return;
+    try {
+      var AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      var ctx = new AudioCtx();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    } catch (e) {}
+  }
+
+  function handleIncomingAlert() {
+    if (document.hidden) {
+      unreadCount++;
+      document.title = '(' + unreadCount + ') ' + originalTitle;
+    }
+    playChime();
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      unreadCount = 0;
+      document.title = originalTitle;
+    }
+  });
+  window.addEventListener('focus', function () {
+    unreadCount = 0;
+    document.title = originalTitle;
+  });
+
   function updatePeerCount() {
     var el = $('peers');
     if (!roomCode) { el.classList.add('hidden'); el.textContent = ''; return; }
@@ -199,6 +262,7 @@
       body.appendChild(txt);
       div.appendChild(whoEl); div.appendChild(body); div.appendChild(time);
       log.appendChild(div);
+      if (!isMe) handleIncomingAlert();
     }
     if (isNearBottom || (m.sender && peer && m.sender === peer.id) || m.from === who()) {
       log.scrollTop = log.scrollHeight;
