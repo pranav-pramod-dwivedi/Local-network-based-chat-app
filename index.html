@@ -106,6 +106,7 @@
       <span>Room: <span class="code-tag" id="activeRoomCode"></span></span>
       <div style="display:flex; gap:8px;">
         <button class="ghost" id="shareRoomBtn" style="padding:4px 10px; font-size:12px;" aria-label="Copy room invite link">Copy invite link</button>
+        <button class="ghost" id="exportChatBtn" style="padding:4px 10px; font-size:12px;" aria-label="Export chat history">Export</button>
         <button class="ghost" id="leaveRoomBtn" style="padding:4px 10px; font-size:12px; color:var(--mut);" title="Leave room" aria-label="Leave room">Leave</button>
       </div>
     </div>
@@ -311,6 +312,33 @@
 
   $('copyRoomBtn').onclick = function () { copyInvite(this); };
   $('shareRoomBtn').onclick = function () { copyInvite(this); };
+
+  function formatChatExport(msgs, code) {
+    var lines = ['# Local Network Chat — Room ' + (code || 'unknown'), '# Exported: ' + new Date().toISOString(), ''];
+    msgs.forEach(function (m) {
+      if (m.sys) {
+        lines.push('--- ' + (m.text || '') + ' ---');
+      } else {
+        lines.push('[' + (m.time || '') + '] ' + (m.from || 'anonymous') + ': ' + (m.text || ''));
+      }
+    });
+    return lines.join('\n');
+  }
+
+  function exportChat() {
+    if (!messages.length) return;
+    var content = formatChatExport(messages, roomCode);
+    var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'chat-' + (roomCode || 'log') + '-' + new Date().toISOString().slice(0, 10) + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  if ($('exportChatBtn')) $('exportChatBtn').onclick = exportChat;
 
   function leaveRoom() {
     conns.forEach(function (c) { try { c.close(); } catch (e) {} });
